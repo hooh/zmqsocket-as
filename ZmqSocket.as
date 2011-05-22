@@ -1,4 +1,4 @@
-﻿package 
+package 
 {
 
 	import flash.errors.*;
@@ -84,31 +84,43 @@
 			return queue.length > 0;
 		}
 		
-		//  Read a message, returns null if no messages available.
+		//  Read a message consisting of String-s, returns null if no messages available.
 		//  Doesn't block.
 		public function recv (): Array
+		{
+			if (queue.length > 0)
+			{
+				var bin: Array = queue.shift ();
+				var str: Array = new Array;
+				while (bin.length > 0)
+				{
+					var frame: ByteArray = bin.shift ();
+					if (frame != null)
+						str.push (frame.readUTFBytes (frame.length));
+					else
+						str.push ("");
+				}
+				return str;
+			}
+			return null;
+		}
+		
+		//  Read a message consisting of ByteArray-s, returns null if no 
+		//  messages available. Doesn't block.
+		public function recvBin (): Array
 		{
 			if (queue.length > 0)
 				return queue.shift ();
 			return null;
 		}
 		
-		//  Triggets IO_ERROR event if socket is not connected
-		//  or msg == null.
+		//  Send a message consisting of String-s, triggets IO_ERROR event if 
+		//  socket is not connected or msg == null.
 		public function send (msg: Array): void
 		{
-			if (!connected)
-			{
-				dispatchEvent (new IOErrorEvent (IOErrorEvent.IO_ERROR, false, false, 
-												 "Socket is not connected yet"));
+			if (!canSend (msg))
 				return;
-			}
-			if (msg == null)
-			{
-				dispatchEvent (new IOErrorEvent (IOErrorEvent.IO_ERROR, false, false, 
-												 "Input message is NULL"));
-				return;
-			}
+
 			while (msg.length > 0)
 			{
 				var frame: String = msg.shift ();
@@ -116,16 +128,50 @@
 			}
 		}
 		
+		//  Send a message consisting of ByteArray-s, triggets IO_ERROR event if 
+		//  socket is not connected or msg == null.
+		public function sendBin (msg: Array): void
+		{
+			if (!canSend (msg))
+				return;
+
+			while (msg.length > 0)
+			{
+				var frame: ByteArray = msg.shift ();
+				writeFrameBin (frame, msg.length > 0);
+			}
+		}
+
+		private function canSend (msg: Array): Boolean
+		{
+			if (!connected)
+			{
+				dispatchEvent (new IOErrorEvent (IOErrorEvent.IO_ERROR, false, false, 
+												 "Socket is not connected yet"));
+				return false;
+			}
+			if (msg == null)
+			{
+				dispatchEvent (new IOErrorEvent (IOErrorEvent.IO_ERROR, false, false, 
+												 "Input message is NULL"));
+				return false;
+			}
+			return true;
+		}
+
 		private function writeFrame (frame: String, more: Boolean = false): void
 		{
-			//  To find out multibyte sequence length, we first 
-			//  convert UTF-8 string to ByteArray.
 			var buf: ByteArray = new ByteArray;
 			if (frame != null && frame.length > 0)
 				buf.writeUTFBytes (frame);
 
+			writeFrameBin (buf, more);
+		}
+		
+		private function writeFrameBin (frame: ByteArray, more: Boolean = false): void
+		{
 			//  Length
-			var len: int = buf.length + 1;
+			var len: int = frame.length + 1;
 			if (len < 255)
 			{
 				socket.writeByte (len);
@@ -147,8 +193,8 @@
 				socket.writeByte (0);
 
 			//  Data
-			if (buf.length > 0)
-				socket.writeBytes (buf);
+			if (frame.length > 0)
+				socket.writeBytes (frame);
 		}
 	
 		private function readNextFrame (): Boolean
@@ -248,7 +294,7 @@
 			{
 				if (current == null)
 					current = new Array;
-				current.push ("");
+				current.push (null);
 				
 				//  If it's the last frame of message, push current message to queue.
 				if (!more)
@@ -273,7 +319,7 @@
 		{
 			if (current == null)
 				current = new Array;
-			current.push (bytes.readUTFBytes (bytes.length));
+			current.push (bytes);
 			
 			
 			//  If it's the last frame of message, push current message to queue.
