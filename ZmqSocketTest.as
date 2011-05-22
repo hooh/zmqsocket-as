@@ -1,4 +1,9 @@
-﻿package
+/*
+	Copyright (c) 2011 by Artur Brugeman
+	License: GNU GPL v3
+*/
+
+package
 {
 	import flash.display.Sprite;
 	import flash.text.*;
@@ -10,13 +15,13 @@
 		
 		public function ZmqSocketTest ()
 		{
-            var input: TextField = new TextField;
-            input.type = TextFieldType.INPUT;
-            input.background = true;
-            input.border = true;
-            input.width = 350;
-            input.height = 350;
-            addChild (input);
+			var input: TextField = new TextField;
+			input.type = TextFieldType.INPUT;
+			input.background = true;
+			input.border = true;
+			input.width = 350;
+			input.height = 350;
+			addChild (input);
 			input.appendText ("Starting\n");
 			
 			try
