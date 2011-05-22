@@ -1,3 +1,8 @@
+/*
+    Copyright (c) 2011 by Artur Brugeman
+	License: GNU GPL v3
+*/
+
 package 
 {
 
