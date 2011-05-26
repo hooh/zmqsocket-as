@@ -34,11 +34,6 @@ package
 				return;
 			}
 
-			socket.addEventListener (Event.CONNECT, function (e: Event) 
-				{
-					input.appendText ("connected!\n");
-				});
-			
 			socket.addEventListener (ZmqSocket.OPEN, function (e: Event)
 				{
 					input.appendText ("opened\n");
