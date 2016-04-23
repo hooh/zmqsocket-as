@@ -1,0 +1,1 @@
+ZmqSocket allows you to talk to zmq-sockets from ActionScript code.
